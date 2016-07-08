@@ -15,13 +15,28 @@
 
         <!-- Test Dependencies -->
         <junit.version>4.12</junit.version>
+        <retrofit.version>2.1.0</retrofit.version>
     </properties>
 
     <dependencies>
         <!-- TODO Feign or Retrofit -->
 
+        <dependency>
+            <groupId>com.squareup.retrofit2</groupId>
+            <artifactId>retrofit</artifactId>
+            <version>${retrofit.version}</version>
+        </dependency>
         <!-- TODO Maybe an Json Api too-->
-
+        <dependency>
+            <groupId>com.squareup.retrofit2</groupId>
+            <artifactId>converter-gson</artifactId>
+            <version>${retrofit.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp-urlconnection</artifactId>
+            <version>3.4.0-RC1</version>
+        </dependency>
         <!--Tests -->
         <dependency>
             <groupId>junit</groupId>
