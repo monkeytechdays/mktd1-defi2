@@ -1,5 +1,15 @@
 package com.monkeypatch.mktd.feignvsretrofit.exo2;
 
+import com.monkeypatch.mktd.feignvsretrofit.exo2.model.LoginPassword;
+import okhttp3.JavaNetCookieJar;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
 import java.io.IOException;
 import java.net.CookieManager;
 import java.net.HttpCookie;
@@ -20,15 +30,54 @@ import static java.util.stream.Collectors.toMap;
 class ApiFactory {
 
 
+    private static Retrofit retrofit;
+
     static MonkeyApi buildMonkeyApi(String url, String login, String password) {
-        // TODO you should implements this method
-        throw new RuntimeException("Not yet implemented");
+        login(url, login, password);
+        return new MonkeyImpl(buildApi(MonkeyRetrofitApi.class, url));
+    }
+
+    private static void login(String url, String login, String password) {
+        try {
+            Call<ResponseBody> call = buildApi(AuthenticationApi.class, url).login(new LoginPassword(login, password));
+            Response<ResponseBody> response = call.execute();
+
+            if (response.code() >= 400)
+                throw decodeError(response.code(), response.message(), () -> new RuntimeException());
+        } catch (IOException e) {
+            throw new SecurityException(e);
+        }
     }
 
     static MonkeyRaceApi buildRaceApi(String url, String login, String password) {
-        // TODO you should implements this method
-        throw new RuntimeException("Not yet implemented");
+        login(url, login, password);
+        return new MonkeyRaceImpl(buildApi(MonkeyRaceRetrofitApi.class, url));
     }
+
+    private static <T> T buildApi(Class<T> clazz, String url) {
+        return getRetrofit(url)
+                .create(clazz);
+    }
+
+    private static Retrofit getRetrofit(String url) {
+        if (retrofit == null) {
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .addInterceptor(chain -> {
+                        Request request = chain.request();
+                        System.out.println(request);
+                        return chain.proceed(request);
+                    })
+                    .cookieJar(new JavaNetCookieJar(COOKIE_MANAGER))
+                    .build();
+            retrofit = new Retrofit.Builder()
+                    .baseUrl(url)
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .client(client)
+                    .build();
+        }
+        return retrofit;
+    }
+
 
     /**
      * Decode HTTP errors
