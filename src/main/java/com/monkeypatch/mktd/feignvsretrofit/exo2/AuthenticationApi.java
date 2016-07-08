@@ -1,8 +1,10 @@
 package com.monkeypatch.mktd.feignvsretrofit.exo2;
 
 import com.monkeypatch.mktd.feignvsretrofit.exo2.model.LoginPassword;
+import feign.Headers;
+import feign.RequestLine;
 
-// TODO you may update this interface to complete the exo1
+@Headers("Content-Type: application/json")
 public interface AuthenticationApi {
 
     /**
@@ -10,5 +12,7 @@ public interface AuthenticationApi {
      * @param loginPassword the login/password
      * @return the authentication token (extract from Cookie)
      */
+
+    @RequestLine("POST /auth")
     String login(LoginPassword loginPassword) throws SecurityException;
 }
