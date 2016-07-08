@@ -18,9 +18,16 @@
     </properties>
 
     <dependencies>
-        <!-- TODO Feign or Retrofit -->
-
-        <!-- TODO Maybe an Json Api too-->
+        <dependency>
+            <groupId>com.netflix.feign</groupId>
+            <artifactId>feign-core</artifactId>
+            <version>8.17.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.netflix.feign</groupId>
+            <artifactId>feign-gson</artifactId>
+            <version>8.17.0</version>
+        </dependency>
 
         <!--Tests -->
         <dependency>

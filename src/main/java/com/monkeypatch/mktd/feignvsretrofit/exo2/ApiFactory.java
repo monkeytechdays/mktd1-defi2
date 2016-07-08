@@ -1,6 +1,14 @@
 package com.monkeypatch.mktd.feignvsretrofit.exo2;
 
+import com.monkeypatch.mktd.feignvsretrofit.exo2.model.LoginPassword;
+import com.monkeypatch.mktd.feignvsretrofit.exo2.model.Photo;
+import feign.Feign;
+import feign.Logger;
+import feign.gson.GsonDecoder;
+import feign.gson.GsonEncoder;
+
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.net.URI;
@@ -21,13 +29,60 @@ class ApiFactory {
 
 
     static MonkeyApi buildMonkeyApi(String url, String login, String password) {
-        // TODO you should implements this method
-        throw new RuntimeException("Not yet implemented");
+
+        String cookie = getCookie(url, login, password);
+
+        return Feign
+                .builder()
+                .decoder((response1, type) -> {
+                    if (type.equals(InputStream.class)) {
+                        return new InputStreamDecoder().decode(response1,type);
+                    }
+                    return new GsonDecoder().decode(response1,type);
+                })
+                .encoder(new GsonEncoder())
+                .requestInterceptor(requestTemplate -> requestTemplate.header("Cookie", cookie))
+                .errorDecoder((s, response) -> decodeError(response.status(), s, () -> new RuntimeException(s)))
+                .target(MonkeyApi.class, url);
     }
 
     static MonkeyRaceApi buildRaceApi(String url, String login, String password) {
-        // TODO you should implements this method
-        throw new RuntimeException("Not yet implemented");
+        String cookie = getCookie(url, login, password);
+        return Feign
+                .builder()
+                .decoder(new GsonDecoder())
+                .encoder(new GsonEncoder())
+                .requestInterceptor(requestTemplate -> requestTemplate.header("Cookie", cookie))
+                .logLevel(Logger.Level.FULL)
+                .logger(getLogger())
+                .errorDecoder((s, response) -> decodeError(response.status(), s, () -> new RuntimeException(s)))
+                .target(MonkeyRaceApi.class, url);
+
+    }
+
+
+    private static String getCookie(String url, String login, String password) {
+        return buildAuthAPI(url).login(new LoginPassword(login, password));
+    }
+
+    static AuthenticationApi buildAuthAPI(String url) {
+        return Feign
+                .builder()
+                .encoder(new GsonEncoder())
+                .decoder(new CookieDecoder())
+                .logLevel(Logger.Level.FULL)
+                .logger(getLogger())
+                .errorDecoder((s, response) -> decodeError(response.status(), s, () -> new RuntimeException(s)))
+                .target(AuthenticationApi.class, url);
+    }
+
+    private static Logger getLogger() {
+        return new Logger() {
+            @Override
+            protected void log(String s, String s1, Object... objects) {
+                System.out.println(String.format(s1, objects));
+            }
+        };
     }
 
     /**
