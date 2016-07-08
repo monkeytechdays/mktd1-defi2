@@ -3,7 +3,6 @@ package com.monkeypatch.mktd.feignvsretrofit.exo2;
 import com.monkeypatch.mktd.feignvsretrofit.exo2.model.LoginPassword;
 import okhttp3.JavaNetCookieJar;
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Response;
@@ -62,12 +61,14 @@ class ApiFactory {
     private static Retrofit getRetrofit(String url) {
         if (retrofit == null) {
             OkHttpClient client = new OkHttpClient.Builder()
-                    .addInterceptor(chain -> {
-                        Request request = chain.request();
-                        System.out.println(request);
-                        return chain.proceed(request);
-                    })
                     .cookieJar(new JavaNetCookieJar(COOKIE_MANAGER))
+                    .addInterceptor(chain -> {
+                        okhttp3.Response response = chain.proceed(chain.request());
+                        if (response.code() >= 400) {
+                            throw decodeError(response.code(), response.message(), () -> new RuntimeException());
+                        }
+                        return response;
+                    })
                     .build();
             retrofit = new Retrofit.Builder()
                     .baseUrl(url)
